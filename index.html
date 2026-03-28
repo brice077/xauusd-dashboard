@@ -340,6 +340,18 @@ tbody tr:hover td { background: var(--bg3); }
   .price-big { font-size: 26px; }
   .countdown-big { font-size: 22px; }
 }
+
+.sess-mini {
+  padding: 10px 14px; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.sess-mini:last-child { border-right: none; }
+.sess-mini .sm-name { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 0.06em; }
+.sess-mini .sm-time { font-size: 10px; color: var(--text3); }
+.sess-mini .sm-status { font-size: 10px; margin-top: 2px; }
+.sess-mini.active .sm-name { color: var(--green); }
+.sess-mini.active .sm-status { color: var(--green); }
+.sess-mini.active { background: rgba(45,212,160,0.04); }
 </style>
 </head>
 <body>
@@ -420,44 +432,90 @@ tbody tr:hover td { background: var(--bg3); }
   </div>
 
   <!-- PRICE + SESSIONS -->
-  <div class="grid-2" style="margin-bottom:16px">
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">XAUUSD Live</span>
-        <span class="card-badge badge-live" id="price-badge">XAU/USD Spot</span>
-      </div>
-      <div class="price-section">
-        <div style="display:flex;align-items:baseline;gap:8px">
-          <span class="price-big" id="price-display">--.--</span>
-          <span class="price-change" id="price-change-display" style="color:var(--text3)">--</span>
-        </div>
-        <div id="price-source-label" style="font-size:10px;color:var(--text3);margin-top:4px">XAU/USD Spot · USD / Troy oz · Yahoo Finance</div>
-      </div>
-      <div class="chart-wrap" style="padding:0 16px 12px">
-        <canvas id="priceChart"></canvas>
-      </div>
+  <!-- TradingView Chart Widget -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <span class="card-title">XAUUSD · Graphique temps réel</span>
+      <span class="card-badge badge-live">TradingView Live</span>
     </div>
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Sessions Forex</span>
-        <span class="card-badge badge-live">Temps réel</span>
-      </div>
-      <div class="sessions" id="sessions-grid"></div>
-      <div style="padding:0 20px 16px">
-        <div class="m-label" style="margin-bottom:8px">Liquidité XAUUSD</div>
-        <div class="risk-bar-wrap">
-          <div class="risk-bar-fill" id="liquidity-bar" style="width:60%;background:var(--gold)"></div>
+    <div id="tv-chart-container" style="height:420px; border-radius:0 0 var(--radius-lg) var(--radius-lg); overflow:hidden;">
+      <!-- TradingView Widget BEGIN -->
+      <div class="tradingview-widget-container" style="height:100%;width:100%">
+        <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+        <div class="tradingview-widget-copyright">
+          <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+            <span class="blue-text" style="color:var(--text3);font-size:10px">TradingView</span>
+          </a>
         </div>
-        <div class="risk-labels"><span>Faible</span><span>Élevée</span></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+        {
+          "autosize": true,
+          "symbol": "OANDA:XAUUSD",
+          "interval": "5",
+          "timezone": "Europe/Paris",
+          "theme": "dark",
+          "style": "1",
+          "locale": "fr",
+          "backgroundColor": "rgba(15, 18, 23, 1)",
+          "gridColor": "rgba(255, 255, 255, 0.04)",
+          "hide_top_toolbar": false,
+          "hide_legend": false,
+          "save_image": false,
+          "calendar": false,
+          "hide_volume": false,
+          "support_host": "https://www.tradingview.com"
+        }
+        </script>
       </div>
+      <!-- TradingView Widget END -->
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--border)">
+      <div id="sess-sydney" class="sess-mini" onclick=""></div>
+      <div id="sess-tokyo" class="sess-mini" onclick=""></div>
+      <div id="sess-london" class="sess-mini" onclick=""></div>
+      <div id="sess-ny" class="sess-mini" onclick=""></div>
     </div>
   </div>
 
   <!-- EVENTS TABLE -->
+  <!-- Annonces: notre tableau interne (filtrable) + widget TradingView Economic Calendar -->
   <div class="card" style="margin-bottom:16px">
     <div class="card-header">
-      <span class="card-title">Annonces économiques</span>
-      <span class="card-badge badge-api" id="events-source-badge">Forex Factory</span>
+      <span class="card-title">Calendrier économique</span>
+      <span class="card-badge badge-live" style="background:rgba(96,165,250,0.1);color:var(--blue);border-color:rgba(96,165,250,0.2)">TradingView · Données réelles</span>
+    </div>
+    <!-- TradingView Economic Calendar Widget -->
+    <div style="height:450px; overflow:hidden;">
+      <div class="tradingview-widget-container" style="height:100%;width:100%">
+        <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+        <div class="tradingview-widget-copyright">
+          <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+            <span style="color:var(--text3);font-size:10px">TradingView</span>
+          </a>
+        </div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+        {
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "width": "100%",
+          "height": "100%",
+          "locale": "fr",
+          "importanceFilter": "-1,0,1",
+          "countryFilter": "us,eu,gb,jp,cn,ch,ca,au"
+        }
+        </script>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notre tableau interne avec le statut robot -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <span class="card-title">Statut robot par annonce</span>
+      <span class="card-badge" id="events-source-badge" style="background:var(--gold-bg);color:var(--gold);border:1px solid rgba(212,168,67,0.2)">Forex Factory JSON</span>
+    </div>
+    <div style="padding:10px 16px;background:rgba(212,168,67,0.05);border-bottom:1px solid var(--border);font-size:11px;color:var(--text3)">
+      ℹ️ Ce tableau analyse les annonces Forex Factory et calcule automatiquement si votre robot doit être actif ou non selon vos paramètres de risque.
     </div>
     <div class="filter-bar">
       <button class="filter-btn active" onclick="setFilter('all',this)">Tout</button>
@@ -466,6 +524,7 @@ tbody tr:hover td { background: var(--bg3); }
       <button class="filter-btn" onclick="setFilter('xau',this)">Or / XAU</button>
       <button class="filter-btn" onclick="setFilter('upcoming',this)">À venir</button>
     </div>
+    <div id="ff-status-banner" style="display:none;padding:10px 16px;font-size:11px;border-bottom:1px solid var(--border)"></div>
     <div class="events-wrap">
       <table>
         <thead>
@@ -673,26 +732,21 @@ function isSessionActive(sess, h) {
   if (sess.start < sess.end) return h >= sess.start && h < sess.end;
   return h >= sess.start || h < sess.end;
 }
+const SESS_IDS = ['sess-sydney','sess-tokyo','sess-london','sess-ny'];
 function renderSessions() {
   const now = getParisNow();
   const parisH = now.getHours();
-  // Paris = UTC+2, convert to UTC for session calculation
   const utcH = (parisH - 2 + 24) % 24;
   let activeSessions = 0;
-  let maxLiq = 0;
-  const html = SESSIONS.map(s => {
+  SESSIONS.forEach((s, i) => {
     const active = isSessionActive(s, utcH);
-    if (active) { activeSessions++; maxLiq += 25; }
-    const timeStr = `${String(s.start).padStart(2,'0')}:00 – ${String(s.end).padStart(2,'0')}:00 UTC`;
-    return `<div class="session ${active ? 'active' : ''}">
-      <div class="sess-name">${s.name}</div>
-      <div class="sess-time">${timeStr}</div>
-      <div class="sess-status ${active ? 'on' : 'off'}">${active ? '● OUVERTE' : '○ fermée'}</div>
-    </div>`;
-  }).join('');
-  document.getElementById('sessions-grid').innerHTML = html;
-  const liq = Math.min(100, activeSessions * 30 + (activeSessions > 1 ? 20 : 0));
-  document.getElementById('liquidity-bar').style.width = liq + '%';
+    if (active) activeSessions++;
+    const el = document.getElementById(SESS_IDS[i]);
+    if (!el) return;
+    el.className = 'sess-mini' + (active ? ' active' : '');
+    const timeStr = `${String(s.start).padStart(2,'0')}:00–${String(s.end).padStart(2,'0')}:00 UTC`;
+    el.innerHTML = `<div class="sm-name">${s.name.toUpperCase()}</div><div class="sm-time">${timeStr}</div><div class="sm-status">${active ? '● OUVERTE' : '○ fermée'}</div>`;
+  });
   const sessName = activeSessions === 0 ? 'Aucune' : activeSessions === 1 ? SESSIONS.find(s => isSessionActive(s, utcH))?.name : `${activeSessions} sessions`;
   document.getElementById('m-session').textContent = sessName;
   document.getElementById('m-session-sub').textContent = activeSessions > 1 ? 'Forte volatilité possible' : 'Liquidité normale';
@@ -700,82 +754,97 @@ function renderSessions() {
 
 // ===================== FOREX FACTORY DATA =====================
 // Forex Factory provides a public JSON calendar — we use a CORS proxy since we're in browser
-const FF_CURRENCIES = ['USD', 'XAU', 'EUR', 'GBP', 'JPY'];
-const FALLBACK_EVENTS = [
-  { time:'08:00', currency:'EUR', name:'Taux directeur BCE', impact:'high', prev:'4.25%', forecast:'4.00%', actual:null, affectsGold:true },
-  { time:'09:30', currency:'GBP', name:'PIB mensuel', impact:'medium', prev:'0.0%', forecast:'0.1%', actual:null, affectsGold:false },
-  { time:'14:30', currency:'USD', name:'CPI (indice des prix)', impact:'high', prev:'3.2%', forecast:'3.1%', actual:null, affectsGold:true },
-  { time:'14:30', currency:'USD', name:'CPI Core (mensuel)', impact:'high', prev:'0.4%', forecast:'0.3%', actual:null, affectsGold:true },
-  { time:'16:00', currency:'USD', name:'Confiance consommateurs', impact:'medium', prev:'92.1', forecast:'93.5', actual:null, affectsGold:false },
-  { time:'18:00', currency:'USD', name:'Stocks de pétrole brut', impact:'medium', prev:'-1.2M', forecast:'-0.8M', actual:null, affectsGold:false },
-  { time:'20:00', currency:'USD', name:'Discours Fed (politique monétaire)', impact:'high', prev:'--', forecast:'--', actual:null, affectsGold:true },
+const FF_CURRENCIES = ['USD', 'XAU', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD'];
+
+// CORS proxies à essayer dans l'ordre
+const CORS_PROXIES = [
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://thingproxy.freeboard.io/fetch/${url}`,
 ];
+const FF_URL = 'https://nfs.faireconomy.media/ff_calendar_thisweek.json';
+
+async function tryFetch(url, timeout = 8000) {
+  const r = await fetch(url, { signal: AbortSignal.timeout(timeout) });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+function parseFFEvents(data) {
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const todayEvents = data.filter(ev => {
+    const evDate = new Date(ev.date);
+    const evDateStr = evDate.toISOString().split('T')[0];
+    const cur = (ev.country || ev.currency || '').toUpperCase();
+    return evDateStr === todayStr && FF_CURRENCIES.includes(cur);
+  });
+  return todayEvents.map(ev => {
+    const d = new Date(ev.date);
+    const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
+    const impact = ev.impact === 'High' ? 'high' : ev.impact === 'Medium' ? 'medium' : 'low';
+    const cur = (ev.country || ev.currency || '').toUpperCase();
+    return {
+      time: timeStr,
+      currency: cur,
+      name: ev.title || ev.name || 'Annonce',
+      impact,
+      prev: ev.previous || '--',
+      forecast: ev.forecast || '--',
+      actual: ev.actual || null,
+      affectsGold: ['USD', 'XAU'].includes(cur) && impact !== 'low',
+    };
+  }).sort((a, b) => a.time.localeCompare(b.time));
+}
 
 async function fetchForexFactory() {
-  // Try the Forex Factory JSON endpoint via a CORS proxy
-  const today = new Date();
-  const month = today.toLocaleString('en-US', { month: 'short' }).toLowerCase();
-  const url = `https://corsproxy.io/?https://nfs.faireconomy.media/ff_calendar_thisweek.json`;
+  // Essai direct (marche si l'hébergeur a CORS ouvert)
   try {
-    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    if (!r.ok) throw new Error('FF fetch failed');
-    const data = await r.json();
-    const todayStr = today.toISOString().split('T')[0];
-    // Parse and filter today's events for relevant currencies
-    const todayEvents = data.filter(ev => {
-      const evDate = new Date(ev.date);
-      const evDateStr = evDate.toISOString().split('T')[0];
-      return evDateStr === todayStr && FF_CURRENCIES.includes(ev.country?.toUpperCase() || ev.currency?.toUpperCase() || '');
-    });
-    if (todayEvents.length === 0) throw new Error('No events today');
-    return todayEvents.map(ev => {
-      const d = new Date(ev.date);
-      const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
-      const impact = ev.impact === 'High' ? 'high' : ev.impact === 'Medium' ? 'medium' : 'low';
-      const cur = (ev.country || ev.currency || '').toUpperCase();
-      return {
-        time: timeStr,
-        currency: cur,
-        name: ev.title || ev.name || 'Annonce',
-        impact,
-        prev: ev.previous || '--',
-        forecast: ev.forecast || '--',
-        actual: ev.actual || null,
-        affectsGold: ['USD','XAU'].includes(cur) && impact === 'high',
-      };
-    });
-  } catch(e) {
-    console.warn('FF API failed, using fallback:', e.message);
-    document.getElementById('events-source-badge').textContent = 'Données simulées';
-    document.getElementById('status-events-bar').innerHTML = '<span class="status-dot dot-orange"></span>Annonces: données demo';
-    return FALLBACK_EVENTS;
+    const data = await tryFetch(FF_URL, 5000);
+    if (Array.isArray(data) && data.length > 0) {
+      const parsed = parseFFEvents(data);
+      setFFStatus('real', `✅ Données Forex Factory réelles — ${parsed.length} annonces aujourd'hui`);
+      return parsed;
+    }
+  } catch(e) {}
+
+  // Essai via chaque proxy CORS
+  for (const makeUrl of CORS_PROXIES) {
+    try {
+      const proxied = makeUrl(FF_URL);
+      const data = await tryFetch(proxied, 8000);
+      const arr = Array.isArray(data) ? data : (data.contents ? JSON.parse(data.contents) : null);
+      if (arr && arr.length > 0) {
+        const parsed = parseFFEvents(arr);
+        setFFStatus('real', `✅ Données Forex Factory réelles — ${parsed.length} annonces aujourd'hui`);
+        return parsed;
+      }
+    } catch(e) { continue; }
   }
+
+  // Fallback : données de démo clairement signalées
+  setFFStatus('demo', '⚠️ Données de démonstration — Forex Factory inaccessible depuis ce réseau. Consultez le widget TradingView ci-dessus pour les vraies annonces.');
+  document.getElementById('events-source-badge').textContent = 'DONNÉES DEMO';
+  document.getElementById('status-events-bar').innerHTML = '<span class="status-dot dot-orange"></span>Annonces: demo (FF inaccessible)';
+  return FALLBACK_EVENTS;
 }
 
-// ===================== MARKET HOURS =====================
-// XAUUSD Forex/Spot : ouvert lun 00:00 UTC → ven 22:00 UTC (heure d'été)
-// Fermé : vendredi 22:00 UTC → dimanche 22:00 UTC
-function isMarketOpen() {
-  const now = new Date();
-  const utcDay = now.getUTCDay(); // 0=dim, 1=lun, ..., 5=ven, 6=sam
-  const utcH = now.getUTCHours();
-  const utcMin = now.getUTCMinutes();
-  const utcMins = utcH * 60 + utcMin;
-  if (utcDay === 6) return false; // Samedi entier fermé
-  if (utcDay === 0 && utcMins < 22 * 60) return false; // Dimanche avant 22h UTC
-  if (utcDay === 5 && utcMins >= 22 * 60) return false; // Vendredi après 22h UTC
-  return true;
-}
-function marketClosedUntil() {
-  const now = new Date();
-  const open = new Date(now);
-  // Prochain dimanche 22:00 UTC
-  const day = now.getUTCDay();
-  const daysUntilSun = day === 0 ? 0 : 7 - day;
-  open.setUTCDate(now.getUTCDate() + daysUntilSun);
-  open.setUTCHours(22, 0, 0, 0);
-  if (open <= now) { open.setUTCDate(open.getUTCDate() + 7); }
-  return open;
+function setFFStatus(type, msg) {
+  const el = document.getElementById('ff-status-banner');
+  if (!el) return;
+  el.style.display = 'block';
+  if (type === 'real') {
+    el.style.background = 'rgba(45,212,160,0.06)';
+    el.style.color = 'var(--green)';
+    el.style.borderColor = 'rgba(45,212,160,0.15)';
+    document.getElementById('events-source-badge').textContent = 'Forex Factory · Réel';
+    document.getElementById('status-events-bar').innerHTML = `<span class="status-dot dot-green"></span>Annonces: réelles (FF)`;
+  } else {
+    el.style.background = 'rgba(245,158,11,0.06)';
+    el.style.color = 'var(--orange)';
+    el.style.borderColor = 'rgba(245,158,11,0.15)';
+  }
+  el.textContent = msg;
 }
 
 // ===================== PRICE DATA =====================
