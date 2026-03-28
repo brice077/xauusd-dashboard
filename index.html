@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>XAUUSD · Robot Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0c0f;
+  --bg2: #0f1217;
+  --bg3: #151820;
+  --bg4: #1c2028;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8eaf0;
+  --text2: #8891a4;
+  --text3: #4a5568;
+  --gold: #d4a843;
+  --gold2: #f0c060;
+  --gold-bg: rgba(212,168,67,0.08);
+  --green: #2dd4a0;
+  --green-bg: rgba(45,212,160,0.08);
+  --red: #f05252;
+  --red-bg: rgba(240,82,82,0.08);
+  --orange: #f59e0b;
+  --orange-bg: rgba(245,158,11,0.08);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,0.08);
+  --font-head: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scanline overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+}
+
+.app { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 20px 24px 60px; }
+
+/* HEADER */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 0 24px; border-bottom: 1px solid var(--border);
+  margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--gold-bg); border: 1px solid rgba(212,168,67,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.logo-text { font-family: var(--font-head); font-size: 20px; font-weight: 800; color: var(--text); }
+.logo-text span { color: var(--gold); }
+.logo-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 1px; }
+.header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 99px;
+  border: 1px solid var(--border2);
+  font-size: 11px; color: var(--text2); letter-spacing: 0.05em;
+}
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+.clock { font-size: 13px; color: var(--text2); }
+
+/* ROBOT STATUS BANNER */
+.robot-banner {
+  border-radius: var(--radius-lg); padding: 20px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 24px; transition: all 0.5s;
+  border: 1px solid; flex-wrap: wrap;
+}
+.banner-safe { background: var(--green-bg); border-color: rgba(45,212,160,0.25); }
+.banner-warn { background: var(--orange-bg); border-color: rgba(245,158,11,0.25); }
+.banner-danger { background: var(--red-bg); border-color: rgba(240,82,82,0.3); animation: flash-border 1s infinite; }
+@keyframes flash-border { 0%,100%{border-color:rgba(240,82,82,0.3)} 50%{border-color:rgba(240,82,82,0.7)} }
+.banner-left { display: flex; align-items: center; gap: 14px; }
+.banner-icon { font-size: 28px; }
+.banner-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; }
+.banner-desc { font-size: 12px; color: var(--text2); margin-top: 2px; line-height: 1.5; }
+.banner-safe .banner-title { color: var(--green); }
+.banner-warn .banner-title { color: var(--orange); }
+.banner-danger .banner-title { color: var(--red); }
+.countdown-big { font-family: var(--font-mono); font-size: 32px; font-weight: 700; letter-spacing: 0.05em; text-align: right; }
+.countdown-big.safe { color: var(--green); }
+.countdown-big.warn { color: var(--orange); }
+.countdown-big.danger { color: var(--red); }
+.countdown-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-align: right; margin-top: 2px; }
+
+/* METRICS ROW */
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.metric-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px; transition: border-color 0.3s;
+}
+.metric-card:hover { border-color: var(--border2); }
+.m-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+.m-val { font-size: 24px; font-weight: 700; color: var(--text); line-height: 1; }
+.m-val.gold { color: var(--gold2); }
+.m-val.green { color: var(--green); }
+.m-val.red { color: var(--red); }
+.m-val.orange { color: var(--orange); }
+.m-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.m-change { font-size: 11px; margin-top: 4px; }
+.m-change.up { color: var(--green); }
+.m-change.down { color: var(--red); }
+
+/* GRID LAYOUT */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+/* CARD */
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+}
+.card-title { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.08em; }
+.card-badge { font-size: 10px; padding: 3px 8px; border-radius: 99px; letter-spacing: 0.05em; }
+.badge-live { background: var(--green-bg); color: var(--green); border: 1px solid rgba(45,212,160,0.2); }
+.badge-api { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(96,165,250,0.2); }
+.badge-gold { background: var(--gold-bg); color: var(--gold); border: 1px solid rgba(212,168,67,0.2); }
+
+/* PRICE CHART */
+.price-section { padding: 16px 20px; }
+.price-big { font-family: var(--font-mono); font-size: 36px; font-weight: 700; color: var(--gold2); letter-spacing: -0.02em; }
+.price-change { font-size: 13px; margin-left: 10px; }
+.chart-wrap { height: 120px; margin-top: 12px; position: relative; }
+canvas { width: 100% !important; }
+
+/* SESSIONS */
+.sessions { display: flex; gap: 8px; padding: 12px 20px; flex-wrap: wrap; }
+.session {
+  flex: 1; min-width: 90px; padding: 10px 12px;
+  border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg3);
+  text-align: center;
+}
+.session.active { border-color: rgba(45,212,160,0.3); background: var(--green-bg); }
+.session.active .sess-name { color: var(--green); }
+.sess-name { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 0.08em; margin-bottom: 2px; }
+.sess-time { font-size: 10px; color: var(--text3); }
+.sess-status { font-size: 10px; margin-top: 4px; }
+.sess-status.on { color: var(--green); }
+.sess-status.off { color: var(--text3); }
+
+/* EVENTS TABLE */
+.events-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th {
+  padding: 10px 16px; text-align: left;
+  font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border); font-weight: 500; white-space: nowrap;
+}
+tbody td {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  vertical-align: middle; white-space: nowrap; color: var(--text2);
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr.ev-past td { opacity: 0.35; }
+tbody tr.ev-active { background: rgba(240,82,82,0.05); }
+tbody tr.ev-next { background: rgba(245,158,11,0.05); }
+tbody tr:hover td { background: var(--bg3); }
+.ev-time { font-family: var(--font-mono); color: var(--text); }
+.flag-cell { font-size: 16px; }
+.ev-name { color: var(--text); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xau-tag {
+  display: inline-block; font-size: 9px; padding: 1px 5px;
+  background: var(--gold-bg); color: var(--gold); border-radius: 4px;
+  border: 1px solid rgba(212,168,67,0.2); margin-left: 5px; vertical-align: middle;
+}
+.impact-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+}
+.pill-high { background: var(--red-bg); color: var(--red); border: 1px solid rgba(240,82,82,0.2); }
+.pill-medium { background: var(--orange-bg); color: var(--orange); border: 1px solid rgba(245,158,11,0.2); }
+.pill-low { background: var(--green-bg); color: var(--green); border: 1px solid rgba(45,212,160,0.2); }
+.pill-dot { width: 5px; height: 5px; border-radius: 50%; }
+.dot-high { background: var(--red); }
+.dot-medium { background: var(--orange); }
+.dot-low { background: var(--green); }
+.data-val { font-family: var(--font-mono); }
+.actual-beat { color: var(--green); font-weight: 700; }
+.actual-miss { color: var(--red); font-weight: 700; }
+.actual-inline { color: var(--text2); }
+.robot-ok { color: var(--green); font-weight: 700; font-size: 11px; }
+.robot-warn { color: var(--orange); font-weight: 700; font-size: 11px; }
+.robot-off { color: var(--red); font-weight: 700; font-size: 11px; }
+.robot-past { color: var(--text3); font-size: 11px; }
+.ev-next-marker { color: var(--orange); font-size: 9px; margin-left: 4px; }
+
+/* FILTER BAR */
+.filter-bar { display: flex; gap: 6px; padding: 12px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.filter-btn {
+  padding: 5px 12px; border-radius: 99px; font-size: 11px; font-family: var(--font-mono);
+  background: transparent; border: 1px solid var(--border); color: var(--text3);
+  cursor: pointer; transition: all 0.2s; letter-spacing: 0.03em;
+}
+.filter-btn:hover { border-color: var(--border2); color: var(--text2); }
+.filter-btn.active { background: var(--gold-bg); border-color: rgba(212,168,67,0.3); color: var(--gold); }
+
+/* VOLATILITY / RISK */
+.risk-meter { padding: 16px 20px; }
+.risk-bar-wrap { height: 8px; border-radius: 99px; background: var(--bg4); overflow: hidden; margin: 8px 0; }
+.risk-bar-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
+.risk-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); }
+.risk-score { font-size: 32px; font-weight: 700; font-family: var(--font-mono); }
+.risk-factors { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.risk-factor { display: flex; align-items: center; justify-content: space-between; font-size: 11px; }
+.rf-label { color: var(--text3); }
+.rf-val { font-family: var(--font-mono); }
+
+/* ALERTS PANEL */
+.alerts-list { display: flex; flex-direction: column; gap: 0; }
+.alert-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+  font-size: 11px; line-height: 1.5;
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.alert-time { color: var(--text3); font-size: 10px; font-family: var(--font-mono); margin-top: 1px; white-space: nowrap; }
+.alert-msg { color: var(--text2); flex: 1; }
+.alert-msg strong { color: var(--text); font-weight: 500; }
+
+/* NEXT EVENTS MINI */
+.next-events { display: flex; flex-direction: column; gap: 0; }
+.next-ev-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+}
+.next-ev-item:last-child { border-bottom: none; }
+.nev-time { font-family: var(--font-mono); font-size: 13px; color: var(--text); min-width: 48px; }
+.nev-bar { flex: 1; height: 3px; background: var(--bg4); border-radius: 99px; overflow: hidden; }
+.nev-bar-fill { height: 100%; border-radius: 99px; }
+.nev-name { font-size: 11px; color: var(--text2); flex: 2; }
+.nev-pill { flex-shrink: 0; }
+
+/* SETTINGS */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px 20px; }
+.setting-item { display: flex; flex-direction: column; gap: 4px; }
+.setting-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+.setting-val { font-family: var(--font-mono); font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.setting-input {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text); font-family: var(--font-mono); font-size: 13px;
+  padding: 6px 10px; border-radius: 6px; width: 80px; outline: none;
+}
+.setting-input:focus { border-color: rgba(212,168,67,0.4); }
+.setting-unit { color: var(--text3); font-size: 11px; }
+.save-btn {
+  margin: 0 20px 16px; padding: 10px 0; background: var(--gold-bg);
+  border: 1px solid rgba(212,168,67,0.3); color: var(--gold);
+  border-radius: var(--radius); font-family: var(--font-mono); font-size: 12px;
+  cursor: pointer; transition: all 0.2s; letter-spacing: 0.05em; width: calc(100% - 40px);
+}
+.save-btn:hover { background: rgba(212,168,67,0.15); }
+
+/* STATUS BAR */
+.status-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: var(--bg); border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 24px; flex-wrap: wrap; gap: 8px;
+}
+.status-items { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.status-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text3); letter-spacing: 0.05em; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+.dot-green { background: var(--green); }
+.dot-orange { background: var(--orange); }
+.dot-red { background: var(--red); }
+.dot-gray { background: var(--text3); }
+.status-right { font-size: 10px; color: var(--text3); }
+
+/* SPINNER */
+.spinner { width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* REFRESH INDICATOR */
+.refresh-bar { height: 2px; background: var(--gold); position: fixed; top: 0; left: 0; z-index: 999; transition: width 0.3s; }
+
+/* SOUND TOGGLE */
+.sound-btn {
+  padding: 5px 10px; border-radius: 6px; font-size: 11px; font-family: var(--font-mono);
+  background: transparent; border: 1px solid var(--border); color: var(--text3);
+  cursor: pointer; transition: all 0.2s;
+}
+.sound-btn.on { border-color: rgba(45,212,160,0.3); color: var(--green); background: var(--green-bg); }
+
+/* API CONFIG */
+.api-config { padding: 16px 20px; }
+.api-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.api-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+.api-input {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text); font-family: var(--font-mono); font-size: 12px;
+  padding: 8px 12px; border-radius: 6px; width: 100%; outline: none;
+}
+.api-input:focus { border-color: rgba(212,168,67,0.4); }
+.api-status { font-size: 10px; margin-top: 2px; }
+.api-ok { color: var(--green); }
+.api-err { color: var(--red); }
+.api-pending { color: var(--text3); }
+
+/* NOTIFICATION POPUP */
+.notif {
+  position: fixed; top: 20px; right: 20px; z-index: 9999;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--radius-lg); padding: 14px 18px;
+  max-width: 320px; font-size: 12px; color: var(--text2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.notif.show { transform: translateX(0); }
+.notif-title { font-weight: 700; color: var(--text); margin-bottom: 3px; font-size: 13px; }
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .app { padding: 16px 14px 60px; }
+  .price-big { font-size: 26px; }
+  .countdown-big { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="refresh-bar" id="refresh-bar" style="width:0%"></div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif">
+  <div class="notif-title" id="notif-title">Alerte</div>
+  <div id="notif-msg">Message</div>
+</div>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-text">XAU<span>GOLD</span> · MT5</div>
+        <div class="logo-sub">PUPrime · Martingale Dashboard</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="sound-btn" id="sound-btn" onclick="toggleSound()">🔔 Son OFF</button>
+      <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+      <div class="clock" id="clock-display">--:--:--</div>
+    </div>
+  </div>
+
+  <!-- ROBOT BANNER -->
+  <div class="robot-banner banner-safe" id="robot-banner">
+    <div class="banner-left">
+      <div class="banner-icon" id="banner-icon">✅</div>
+      <div>
+        <div class="banner-title" id="banner-title">Robot activable</div>
+        <div class="banner-desc" id="banner-desc">Aucune annonce à fort impact dans la fenêtre de risque. Conditions favorables pour la martingale.</div>
+      </div>
+    </div>
+    <div>
+      <div class="countdown-big safe" id="countdown-display">--:--:--</div>
+      <div class="countdown-label" id="countdown-label">avant la prochaine annonce majeure</div>
+    </div>
+  </div>
+
+  <!-- METRICS ROW -->
+  <div class="metrics" id="metrics-row">
+    <div class="metric-card">
+      <div class="m-label">XAUUSD Prix</div>
+      <div class="m-val gold" id="m-price">Chargement...</div>
+      <div class="m-change" id="m-change">--</div>
+    </div>
+    <div class="metric-card">
+      <div class="m-label">Annonces aujourd'hui</div>
+      <div class="m-val" id="m-total">--</div>
+      <div class="m-sub">toutes devises</div>
+    </div>
+    <div class="metric-card">
+      <div class="m-label">Impact élevé USD/Or</div>
+      <div class="m-val red" id="m-high">--</div>
+      <div class="m-sub">reste de la journée</div>
+    </div>
+    <div class="metric-card">
+      <div class="m-label">Prochaine annonce</div>
+      <div class="m-val orange" id="m-next-time">--:--</div>
+      <div class="m-sub" id="m-next-name">--</div>
+    </div>
+    <div class="metric-card">
+      <div class="m-label">Score de risque</div>
+      <div class="m-val" id="m-risk">--/10</div>
+      <div class="m-sub" id="m-risk-label">--</div>
+    </div>
+    <div class="metric-card">
+      <div class="m-label">Session active</div>
+      <div class="m-val green" id="m-session">--</div>
+      <div class="m-sub" id="m-session-sub">--</div>
+    </div>
+  </div>
+
+  <!-- PRICE + SESSIONS -->
+  <div class="grid-2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">XAUUSD Live</span>
+        <span class="card-badge badge-live" id="price-badge">XAU/USD Spot</span>
+      </div>
+      <div class="price-section">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span class="price-big" id="price-display">--.--</span>
+          <span class="price-change" id="price-change-display" style="color:var(--text3)">--</span>
+        </div>
+        <div id="price-source-label" style="font-size:10px;color:var(--text3);margin-top:4px">XAU/USD Spot · USD / Troy oz · Yahoo Finance</div>
+      </div>
+      <div class="chart-wrap" style="padding:0 16px 12px">
+        <canvas id="priceChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Sessions Forex</span>
+        <span class="card-badge badge-live">Temps réel</span>
+      </div>
+      <div class="sessions" id="sessions-grid"></div>
+      <div style="padding:0 20px 16px">
+        <div class="m-label" style="margin-bottom:8px">Liquidité XAUUSD</div>
+        <div class="risk-bar-wrap">
+          <div class="risk-bar-fill" id="liquidity-bar" style="width:60%;background:var(--gold)"></div>
+        </div>
+        <div class="risk-labels"><span>Faible</span><span>Élevée</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENTS TABLE -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <span class="card-title">Annonces économiques</span>
+      <span class="card-badge badge-api" id="events-source-badge">Forex Factory</span>
+    </div>
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="setFilter('all',this)">Tout</button>
+      <button class="filter-btn" onclick="setFilter('high',this)">Impact élevé</button>
+      <button class="filter-btn" onclick="setFilter('usd',this)">USD</button>
+      <button class="filter-btn" onclick="setFilter('xau',this)">Or / XAU</button>
+      <button class="filter-btn" onclick="setFilter('upcoming',this)">À venir</button>
+    </div>
+    <div class="events-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Heure (Paris)</th>
+            <th>Devise</th>
+            <th>Annonce</th>
+            <th>Impact</th>
+            <th>Précédent</th>
+            <th>Prévision</th>
+            <th>Actuel</th>
+            <th>Robot</th>
+          </tr>
+        </thead>
+        <tbody id="events-body">
+          <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text3)"><div class="spinner"></div> Chargement des annonces...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RISK + ALERTS -->
+  <div class="grid-2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Score de risque martingale</span>
+        <span class="card-badge badge-gold">Temps réel</span>
+      </div>
+      <div class="risk-meter">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span class="risk-score" id="risk-score">--</span>
+          <span style="font-size:14px;color:var(--text3)">/10</span>
+          <span style="font-size:13px;margin-left:4px" id="risk-label-text">--</span>
+        </div>
+        <div class="risk-bar-wrap" style="margin:12px 0 4px">
+          <div class="risk-bar-fill" id="risk-bar" style="width:0%"></div>
+        </div>
+        <div class="risk-labels"><span style="color:var(--green)">Faible</span><span style="color:var(--orange)">Modéré</span><span style="color:var(--red)">Élevé</span></div>
+        <div class="risk-factors" id="risk-factors"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Journal des alertes</span>
+        <span class="card-badge badge-live">Auto</span>
+      </div>
+      <div class="alerts-list" id="alerts-list">
+        <div class="alert-item"><span class="alert-icon">📋</span><span class="alert-msg">Démarrage du dashboard...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="grid-2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Paramètres de risque</span>
+      </div>
+      <div class="settings-grid">
+        <div class="setting-item">
+          <div class="setting-label">Zone avant annonce</div>
+          <div class="setting-val">
+            <input class="setting-input" id="s-before" type="number" value="30" min="5" max="120"/>
+            <span class="setting-unit">min</span>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div class="setting-label">Zone après annonce</div>
+          <div class="setting-val">
+            <input class="setting-input" id="s-after" type="number" value="30" min="5" max="120"/>
+            <span class="setting-unit">min</span>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div class="setting-label">Alerte son</div>
+          <div class="setting-val">
+            <input class="setting-input" id="s-alert" type="number" value="60" min="5" max="120"/>
+            <span class="setting-unit">min avant</span>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div class="setting-label">Filtrer impact</div>
+          <div class="setting-val">
+            <select class="setting-input" id="s-impact" style="width:100px">
+              <option value="high">Élevé seul</option>
+              <option value="medium">Moyen+</option>
+              <option value="all">Tous</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveSettings()">💾 Enregistrer les paramètres</button>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Configuration API</span>
+        <span class="card-badge badge-api">Optionnel</span>
+      </div>
+      <div class="api-config">
+        <div class="api-row">
+          <div class="api-label">Twelve Data API Key (XAUUSD temps réel)</div>
+          <input class="api-input" id="api-twelve" type="text" placeholder="Votre clé API Twelve Data (gratuit)" oninput="saveApiKeys()"/>
+          <div class="api-status api-pending" id="status-twelve">Non configuré — utilise Yahoo Finance (délai 15 min)</div>
+        </div>
+        <div class="api-row">
+          <div class="api-label">Forex Factory (automatique)</div>
+          <input class="api-input" type="text" value="Accès public JSON — aucune clé requise" disabled style="opacity:0.5"/>
+          <div class="api-status api-ok" id="status-ff">✓ Connecté</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-items">
+    <div class="status-item"><span class="status-dot dot-green"></span>Dashboard actif</div>
+    <div class="status-item" id="status-price-bar"><span class="status-dot dot-gray"></span>Prix: connexion...</div>
+    <div class="status-item" id="status-events-bar"><span class="status-dot dot-gray"></span>Annonces: chargement...</div>
+    <div class="status-item"><span class="status-dot dot-green"></span>PUPrime · MT5</div>
+    <div class="status-item" id="last-update-bar">MAJ: --</div>
+  </div>
+  <div class="status-right" id="next-refresh">Prochaine MAJ: --</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ===================== STATE =====================
+let events = [];
+let priceHistory = [];
+let currentPrice = null;
+let currentFilter = 'all';
+let soundEnabled = false;
+let lastRobotState = null;
+let alertLog = [];
+let priceChart = null;
+let settings = {
+  before: 30, after: 30, alertMin: 60, impact: 'high'
+};
+let apiKeys = { twelve: '' };
+let refreshCountdown = 60;
+let nextEventTime = null;
+
+// ===================== LOAD SETTINGS =====================
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem('robot_settings') || '{}');
+    if (s.before) settings.before = s.before;
+    if (s.after) settings.after = s.after;
+    if (s.alertMin) settings.alertMin = s.alertMin;
+    if (s.impact) settings.impact = s.impact;
+    document.getElementById('s-before').value = settings.before;
+    document.getElementById('s-after').value = settings.after;
+    document.getElementById('s-alert').value = settings.alertMin;
+    document.getElementById('s-impact').value = settings.impact;
+    const k = JSON.parse(localStorage.getItem('robot_apikeys') || '{}');
+    if (k.twelve) { apiKeys.twelve = k.twelve; document.getElementById('api-twelve').value = k.twelve; }
+  } catch(e) {}
+}
+function saveSettings() {
+  settings.before = parseInt(document.getElementById('s-before').value) || 30;
+  settings.after = parseInt(document.getElementById('s-after').value) || 30;
+  settings.alertMin = parseInt(document.getElementById('s-alert').value) || 60;
+  settings.impact = document.getElementById('s-impact').value;
+  localStorage.setItem('robot_settings', JSON.stringify(settings));
+  pushAlert('⚙️', 'Paramètres enregistrés', `Zone de risque : ±${settings.before}/${settings.after} min`);
+  showNotif('Paramètres sauvegardés', `Zone risque : −${settings.before} / +${settings.after} min`);
+}
+function saveApiKeys() {
+  apiKeys.twelve = document.getElementById('api-twelve').value.trim();
+  localStorage.setItem('robot_apikeys', JSON.stringify(apiKeys));
+}
+
+// ===================== TIME UTILS =====================
+function getParisNow() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
+}
+function parseEventTime(timeStr, baseDate) {
+  const [h, m] = timeStr.split(':').map(Number);
+  const d = new Date(baseDate);
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+function fmtTime(date) {
+  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+function fmtCountdown(ms) {
+  if (ms <= 0) return '00:00:00';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ===================== SESSIONS =====================
+const SESSIONS = [
+  { name: 'Sydney',  start: 22, end: 7,  pairs: ['XAUUSD'] },
+  { name: 'Tokyo',   start: 0,  end: 9,  pairs: ['XAUUSD'] },
+  { name: 'Londres', start: 8,  end: 17, pairs: ['XAUUSD'] },
+  { name: 'New York',start: 13, end: 22, pairs: ['XAUUSD'] },
+];
+function isSessionActive(sess, h) {
+  if (sess.start < sess.end) return h >= sess.start && h < sess.end;
+  return h >= sess.start || h < sess.end;
+}
+function renderSessions() {
+  const now = getParisNow();
+  const parisH = now.getHours();
+  // Paris = UTC+2, convert to UTC for session calculation
+  const utcH = (parisH - 2 + 24) % 24;
+  let activeSessions = 0;
+  let maxLiq = 0;
+  const html = SESSIONS.map(s => {
+    const active = isSessionActive(s, utcH);
+    if (active) { activeSessions++; maxLiq += 25; }
+    const timeStr = `${String(s.start).padStart(2,'0')}:00 – ${String(s.end).padStart(2,'0')}:00 UTC`;
+    return `<div class="session ${active ? 'active' : ''}">
+      <div class="sess-name">${s.name}</div>
+      <div class="sess-time">${timeStr}</div>
+      <div class="sess-status ${active ? 'on' : 'off'}">${active ? '● OUVERTE' : '○ fermée'}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('sessions-grid').innerHTML = html;
+  const liq = Math.min(100, activeSessions * 30 + (activeSessions > 1 ? 20 : 0));
+  document.getElementById('liquidity-bar').style.width = liq + '%';
+  const sessName = activeSessions === 0 ? 'Aucune' : activeSessions === 1 ? SESSIONS.find(s => isSessionActive(s, utcH))?.name : `${activeSessions} sessions`;
+  document.getElementById('m-session').textContent = sessName;
+  document.getElementById('m-session-sub').textContent = activeSessions > 1 ? 'Forte volatilité possible' : 'Liquidité normale';
+}
+
+// ===================== FOREX FACTORY DATA =====================
+// Forex Factory provides a public JSON calendar — we use a CORS proxy since we're in browser
+const FF_CURRENCIES = ['USD', 'XAU', 'EUR', 'GBP', 'JPY'];
+const FALLBACK_EVENTS = [
+  { time:'08:00', currency:'EUR', name:'Taux directeur BCE', impact:'high', prev:'4.25%', forecast:'4.00%', actual:null, affectsGold:true },
+  { time:'09:30', currency:'GBP', name:'PIB mensuel', impact:'medium', prev:'0.0%', forecast:'0.1%', actual:null, affectsGold:false },
+  { time:'14:30', currency:'USD', name:'CPI (indice des prix)', impact:'high', prev:'3.2%', forecast:'3.1%', actual:null, affectsGold:true },
+  { time:'14:30', currency:'USD', name:'CPI Core (mensuel)', impact:'high', prev:'0.4%', forecast:'0.3%', actual:null, affectsGold:true },
+  { time:'16:00', currency:'USD', name:'Confiance consommateurs', impact:'medium', prev:'92.1', forecast:'93.5', actual:null, affectsGold:false },
+  { time:'18:00', currency:'USD', name:'Stocks de pétrole brut', impact:'medium', prev:'-1.2M', forecast:'-0.8M', actual:null, affectsGold:false },
+  { time:'20:00', currency:'USD', name:'Discours Fed (politique monétaire)', impact:'high', prev:'--', forecast:'--', actual:null, affectsGold:true },
+];
+
+async function fetchForexFactory() {
+  // Try the Forex Factory JSON endpoint via a CORS proxy
+  const today = new Date();
+  const month = today.toLocaleString('en-US', { month: 'short' }).toLowerCase();
+  const url = `https://corsproxy.io/?https://nfs.faireconomy.media/ff_calendar_thisweek.json`;
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error('FF fetch failed');
+    const data = await r.json();
+    const todayStr = today.toISOString().split('T')[0];
+    // Parse and filter today's events for relevant currencies
+    const todayEvents = data.filter(ev => {
+      const evDate = new Date(ev.date);
+      const evDateStr = evDate.toISOString().split('T')[0];
+      return evDateStr === todayStr && FF_CURRENCIES.includes(ev.country?.toUpperCase() || ev.currency?.toUpperCase() || '');
+    });
+    if (todayEvents.length === 0) throw new Error('No events today');
+    return todayEvents.map(ev => {
+      const d = new Date(ev.date);
+      const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
+      const impact = ev.impact === 'High' ? 'high' : ev.impact === 'Medium' ? 'medium' : 'low';
+      const cur = (ev.country || ev.currency || '').toUpperCase();
+      return {
+        time: timeStr,
+        currency: cur,
+        name: ev.title || ev.name || 'Annonce',
+        impact,
+        prev: ev.previous || '--',
+        forecast: ev.forecast || '--',
+        actual: ev.actual || null,
+        affectsGold: ['USD','XAU'].includes(cur) && impact === 'high',
+      };
+    });
+  } catch(e) {
+    console.warn('FF API failed, using fallback:', e.message);
+    document.getElementById('events-source-badge').textContent = 'Données simulées';
+    document.getElementById('status-events-bar').innerHTML = '<span class="status-dot dot-orange"></span>Annonces: données demo';
+    return FALLBACK_EVENTS;
+  }
+}
+
+// ===================== MARKET HOURS =====================
+// XAUUSD Forex/Spot : ouvert lun 00:00 UTC → ven 22:00 UTC (heure d'été)
+// Fermé : vendredi 22:00 UTC → dimanche 22:00 UTC
+function isMarketOpen() {
+  const now = new Date();
+  const utcDay = now.getUTCDay(); // 0=dim, 1=lun, ..., 5=ven, 6=sam
+  const utcH = now.getUTCHours();
+  const utcMin = now.getUTCMinutes();
+  const utcMins = utcH * 60 + utcMin;
+  if (utcDay === 6) return false; // Samedi entier fermé
+  if (utcDay === 0 && utcMins < 22 * 60) return false; // Dimanche avant 22h UTC
+  if (utcDay === 5 && utcMins >= 22 * 60) return false; // Vendredi après 22h UTC
+  return true;
+}
+function marketClosedUntil() {
+  const now = new Date();
+  const open = new Date(now);
+  // Prochain dimanche 22:00 UTC
+  const day = now.getUTCDay();
+  const daysUntilSun = day === 0 ? 0 : 7 - day;
+  open.setUTCDate(now.getUTCDate() + daysUntilSun);
+  open.setUTCHours(22, 0, 0, 0);
+  if (open <= now) { open.setUTCDate(open.getUTCDate() + 7); }
+  return open;
+}
+
+// ===================== PRICE DATA =====================
+async function fetchPrice() {
+  // XAUUSD Spot via Yahoo Finance — ticker "XAUUSD=X" (spot, pas futures GC=F)
+  // On essaie plusieurs tickers pour maximiser la fiabilité
+  const tickers = ['XAUUSD%3DX', 'GLD']; // XAUUSD=X spot, puis GLD ETF comme référence
+  const proxies = tickers.map(t => [
+    `https://corsproxy.io/?https://query1.finance.yahoo.com/v8/finance/chart/${t}?interval=5m&range=5d`,
+    `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${t}?interval=5m&range=5d`,
+  ]).flat();
+
+  for (const url of proxies) {
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) continue;
+      const d = await r.json();
+      const result = d?.chart?.result?.[0];
+      if (!result) continue;
+      const meta = result.meta || {};
+      const closes = result.indicators?.quote?.[0]?.close || [];
+      const timestamps = result.timestamp || [];
+      const validPrices = closes.map((p,i) => ({ price: p, ts: timestamps[i] })).filter(x => x.price != null && x.price > 100);
+      if (validPrices.length === 0) continue;
+
+      // Prix de clôture vendredi = dernier prix connu
+      const latest = validPrices[validPrices.length - 1];
+      // Variation jour : comparer avec 24h avant
+      const oneDayAgo = latest.ts - 86400;
+      const dayAgoEntry = validPrices.find(x => x.ts >= oneDayAgo) || validPrices[0];
+      const change = latest.price - dayAgoEntry.price;
+      const changePct = (change / dayAgoEntry.price) * 100;
+      // Pour le graphique on prend les dernières 60 bougies (derniers jours de trading)
+      priceHistory = validPrices.slice(-60).map(x => x.price);
+
+      // Dernier timestamp réel du marché
+      const lastTradeDate = new Date(latest.ts * 1000);
+      return {
+        price: latest.price,
+        change,
+        changePct,
+        lastTradeDate,
+        marketOpen: isMarketOpen(),
+        source: url.includes('XAUUSD') ? 'XAUUSD Spot' : 'Référence GLD',
+      };
+    } catch(e) { continue; }
+  }
+
+  // Fallback : garder le dernier prix connu
+  const base = currentPrice?.price || null;
+  return base ? { ...currentPrice, marketOpen: isMarketOpen(), stale: true } : null;
+}
+
+function updatePriceUI(data) {
+  if (!data) return;
+  currentPrice = data;
+  const p = data.price.toFixed(2);
+  const marketOpen = data.marketOpen;
+
+  // Affichage prix
+  document.getElementById('price-display').textContent = p;
+  document.getElementById('m-price').textContent = p;
+
+  // Variation
+  const chg = data.change || 0;
+  const pct = data.changePct || 0;
+  const sign = chg >= 0 ? '+' : '';
+  const color = chg >= 0 ? 'var(--green)' : 'var(--red)';
+  const chgStr = `${sign}${chg.toFixed(2)} (${sign}${pct.toFixed(2)}%)`;
+  document.getElementById('price-change-display').textContent = chgStr;
+  document.getElementById('price-change-display').style.color = chg === 0 ? 'var(--text3)' : color;
+  document.getElementById('m-change').textContent = chgStr;
+  document.getElementById('m-change').className = `m-change ${chg >= 0 ? 'up' : 'down'}`;
+
+  // Source et statut marché
+  const src = data.source || 'Yahoo Finance';
+  const priceSourceEl = document.getElementById('price-source-label');
+  const priceBadgeEl = document.getElementById('price-badge');
+  if (!marketOpen) {
+    const reopens = marketClosedUntil();
+    const reopenStr = reopens.toLocaleString('fr-FR', { weekday:'long', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris' });
+    document.getElementById('status-price-bar').innerHTML = `<span class="status-dot dot-orange"></span>Marché FERMÉ · Réouverture ${reopenStr} (heure Paris)`;
+    if (priceSourceEl) {
+      const lastDate = data.lastTradeDate ? data.lastTradeDate.toLocaleDateString('fr-FR',{weekday:'long', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris'}) : 'vendredi';
+      priceSourceEl.innerHTML = `<span style="color:var(--orange)">⛔ Marché fermé (weekend) — Dernier cours : ${lastDate}</span>`;
+    }
+    if (priceBadgeEl) { priceBadgeEl.textContent = 'Marché fermé'; priceBadgeEl.className = 'card-badge badge-gold'; }
+    // Griser le prix pour signifier qu'il est périmé
+    document.getElementById('price-display').style.opacity = '0.5';
+    document.getElementById('price-change-display').style.opacity = '0.5';
+  } else {
+    document.getElementById('status-price-bar').innerHTML = `<span class="status-dot dot-green"></span>Prix: $${p} · ${src}`;
+    if (priceSourceEl) priceSourceEl.textContent = `${src} · XAU/USD Spot · USD / Troy oz`;
+    if (priceBadgeEl) { priceBadgeEl.textContent = 'Live'; priceBadgeEl.className = 'card-badge badge-live'; }
+    document.getElementById('price-display').style.opacity = '1';
+    document.getElementById('price-change-display').style.opacity = '1';
+  }
+  updateChart();
+}
+
+// ===================== CHART =====================
+function initChart() {
+  const ctx = document.getElementById('priceChart').getContext('2d');
+  priceChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Array(60).fill(''),
+      datasets: [{
+        data: Array(60).fill(null),
+        borderColor: '#d4a843',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: true,
+        backgroundColor: (ctx) => {
+          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 120);
+          g.addColorStop(0, 'rgba(212,168,67,0.15)');
+          g.addColorStop(1, 'rgba(212,168,67,0)');
+          return g;
+        },
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { display: false },
+        y: {
+          display: true, position: 'right',
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#4a5568', font: { size: 10, family: "'JetBrains Mono'" }, maxTicksLimit: 4,
+            callback: v => v ? v.toFixed(0) : '' }
+        }
+      }
+    }
+  });
+}
+function updateChart() {
+  if (!priceChart || priceHistory.length === 0) return;
+  priceChart.data.datasets[0].data = [...priceHistory];
+  priceChart.data.labels = priceHistory.map((_,i) => i);
+  priceChart.update('none');
+}
+
+// ===================== RISK SCORE =====================
+function computeRisk(now) {
+  let score = 0;
+  const factors = [];
+  const upcoming = events.filter(ev => !ev.actual);
+  let minDiff = Infinity;
+  let closestHigh = null;
+  upcoming.forEach(ev => {
+    const t = parseEventTime(ev.time, now);
+    const diffMin = (t - now) / 60000;
+    const absDiff = Math.abs(diffMin);
+    if (ev.impact === 'high' && absDiff < Math.abs(minDiff)) {
+      minDiff = diffMin; closestHigh = ev;
+    }
+    if (ev.impact === 'high' && diffMin >= -settings.after && diffMin <= settings.before) {
+      score += diffMin > 0 ? (4 * (1 - diffMin / settings.before)) : (3 * (1 + diffMin / settings.after));
+    } else if (ev.impact === 'medium' && diffMin >= -15 && diffMin <= 30) {
+      score += 1.5;
+    }
+    if (ev.affectsGold && ev.impact === 'high' && absDiff < 120) score += 1;
+  });
+  // Session risk
+  const utcH = ((now.getHours() - 2) + 24) % 24;
+  const activeSess = SESSIONS.filter(s => isSessionActive(s, utcH)).length;
+  if (activeSess >= 2) { score += 0.5; factors.push({ label: 'Overlap de sessions', val: '+0.5', color: 'var(--orange)' }); }
+  if (closestHigh) {
+    const d = Math.abs(minDiff);
+    factors.push({ label: `${closestHigh.name}`, val: `dans ${Math.ceil(d)}min`, color: d < 30 ? 'var(--red)' : 'var(--orange)' });
+  }
+  const highCount = upcoming.filter(e => e.impact === 'high' && e.affectsGold).length;
+  if (highCount > 0) factors.push({ label: 'Annonces Or restantes', val: highCount, color: 'var(--gold)' });
+  const finalScore = Math.min(10, Math.max(0, Math.round(score * 10) / 10));
+  return { score: finalScore, factors };
+}
+
+function renderRisk(risk) {
+  document.getElementById('risk-score').textContent = risk.score.toFixed(1);
+  document.getElementById('m-risk').textContent = risk.score.toFixed(1) + '/10';
+  const bar = document.getElementById('risk-bar');
+  bar.style.width = (risk.score * 10) + '%';
+  let label, color;
+  if (risk.score <= 3) { label = 'Faible — robot activable'; color = 'var(--green)'; }
+  else if (risk.score <= 6) { label = 'Modéré — vigilance'; color = 'var(--orange)'; }
+  else { label = 'Élevé — désactiver'; color = 'var(--red)'; }
+  bar.style.background = color;
+  document.getElementById('risk-label-text').textContent = label;
+  document.getElementById('risk-label-text').style.color = color;
+  document.getElementById('m-risk-label').textContent = label.split(' — ')[0];
+  const fEl = document.getElementById('risk-factors');
+  fEl.innerHTML = risk.factors.map(f => `
+    <div class="risk-factor">
+      <span class="rf-label">${f.label}</span>
+      <span class="rf-val" style="color:${f.color}">${f.val}</span>
+    </div>`).join('');
+}
+
+// ===================== ROBOT BANNER =====================
+function updateBanner(now) {
+  // Marché fermé le weekend → robot inutile
+  if (!isMarketOpen()) {
+    const reopens = marketClosedUntil();
+    const reopenStr = reopens.toLocaleString('fr-FR', { weekday:'long', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris' });
+    const banner = document.getElementById('robot-banner');
+    banner.className = 'robot-banner banner-warn';
+    document.getElementById('banner-icon').textContent = '🔒';
+    document.getElementById('banner-title').textContent = 'Marché fermé — Weekend';
+    document.getElementById('banner-desc').textContent = `XAU/USD ne trade pas le weekend. Réouverture ${reopenStr} (heure Paris). Consultez le dashboard lundi matin.`;
+    const cd = document.getElementById('countdown-display');
+    const diff = reopens - now;
+    cd.textContent = fmtCountdown(diff > 0 ? diff : 0);
+    cd.className = 'countdown-big warn';
+    document.getElementById('countdown-label').textContent = 'avant la réouverture du marché';
+    return;
+  }
+
+  const upcoming = events.filter(ev => !ev.actual);
+  let state = 'safe';
+  let title = 'Robot activable';
+  let desc = 'Aucune annonce à fort impact dans la fenêtre de risque. Conditions favorables pour la martingale XAUUSD.';
+  let nextMajor = null;
+  let nextMajorDiff = Infinity;
+  upcoming.forEach(ev => {
+    const t = parseEventTime(ev.time, now);
+    const diffMin = (t - now) / 60000;
+    if (ev.impact === 'high' && diffMin > 0 && diffMin < nextMajorDiff) {
+      nextMajorDiff = diffMin; nextMajor = ev;
+    }
+    if (ev.impact === 'high' && diffMin <= settings.before && diffMin >= -settings.after) {
+      state = 'danger';
+    } else if (ev.impact === 'medium' && diffMin <= 15 && diffMin >= -15 && state !== 'danger') {
+      state = 'warn';
+    }
+  });
+  if (nextMajor) {
+    nextEventTime = parseEventTime(nextMajor.time, now);
+    document.getElementById('m-next-time').textContent = nextMajor.time;
+    document.getElementById('m-next-name').textContent = nextMajor.name.substring(0, 30);
+    if (nextMajorDiff <= settings.alertMin && nextMajorDiff > settings.before) {
+      if (state === 'safe') state = 'warn';
+      desc = `⚠ Préparez-vous : "${nextMajor.name}" dans ${Math.ceil(nextMajorDiff)} min. Désactivez le robot à ${fmtTime(new Date(nextEventTime - settings.before * 60000))}.`;
+    }
+  } else {
+    nextEventTime = null;
+    document.getElementById('m-next-time').textContent = 'Aucune';
+    document.getElementById('m-next-name').textContent = 'Journée dégagée';
+  }
+  const banner = document.getElementById('robot-banner');
+  banner.className = `robot-banner banner-${state}`;
+  if (state === 'danger') {
+    title = 'DÉSACTIVER LE ROBOT MAINTENANT';
+    desc = `🚨 Annonce à impact élevé dans la fenêtre de risque (±${settings.before}/${settings.after} min). Suspendez votre martingale immédiatement.`;
+    document.getElementById('banner-icon').textContent = '🚨';
+  } else if (state === 'warn') {
+    title = 'Vigilance — Préparez-vous';
+    document.getElementById('banner-icon').textContent = '⚠️';
+  } else {
+    document.getElementById('banner-icon').textContent = '✅';
+  }
+  document.getElementById('banner-title').textContent = title;
+  document.getElementById('banner-desc').textContent = desc;
+  // Sound alert
+  if (soundEnabled && state !== lastRobotState) {
+    if (state === 'danger') playBeep(880, 0.3, 3);
+    else if (state === 'warn') playBeep(440, 0.1, 1);
+  }
+  if (state !== lastRobotState) {
+    if (lastRobotState !== null) {
+      const msgs = { safe: '✅ Zone dégagée — Robot activable', warn: '⚠️ Vigilance requise', danger: '🚨 Robot à désactiver immédiatement' };
+      pushAlert(state === 'safe' ? '✅' : state === 'warn' ? '⚠️' : '🚨', msgs[state] || title, '');
+      if (state !== 'safe') showNotif(title, desc.substring(0, 80));
+    }
+    lastRobotState = state;
+  }
+}
+
+// ===================== COUNTDOWN =====================
+function updateCountdown(now) {
+  const cd = document.getElementById('countdown-display');
+  const cl = document.getElementById('countdown-label');
+  if (!nextEventTime) {
+    cd.textContent = '—';
+    cd.className = 'countdown-big safe';
+    cl.textContent = 'aucune annonce majeure prévue';
+    return;
+  }
+  const diff = nextEventTime - now;
+  const diffMin = diff / 60000;
+  cd.textContent = diff > 0 ? fmtCountdown(diff) : '00:00:00';
+  if (diffMin <= settings.before && diffMin >= 0) { cd.className = 'countdown-big danger'; }
+  else if (diffMin <= settings.alertMin) { cd.className = 'countdown-big warn'; }
+  else { cd.className = 'countdown-big safe'; }
+  cl.textContent = diff > 0 ? `avant "${nextEventTime ? document.getElementById('m-next-name').textContent : '...'}"` : 'annonce en cours';
+}
+
+// ===================== EVENTS TABLE =====================
+function getImpactLevel(ev) {
+  if (settings.impact === 'high') return ev.impact === 'high';
+  if (settings.impact === 'medium') return ev.impact !== 'low';
+  return true;
+}
+function robotStatusForEvent(ev, now) {
+  if (ev.actual !== null) return '<span class="robot-past">Passé</span>';
+  const t = parseEventTime(ev.time, now);
+  const diffMin = (t - now) / 60000;
+  if (!getImpactLevel(ev)) return '<span class="robot-ok">✓ OK</span>';
+  if (ev.impact === 'high') {
+    if (diffMin <= settings.before && diffMin >= -settings.after) return '<span class="robot-off">⛔ Désactiver</span>';
+    if (diffMin <= settings.alertMin) return '<span class="robot-warn">⚠ Préparez-vous</span>';
+  }
+  if (ev.impact === 'medium' && diffMin <= 15 && diffMin >= -15) return '<span class="robot-warn">⚠ Prudence</span>';
+  return '<span class="robot-ok">✓ OK</span>';
+}
+function impactPill(impact) {
+  const labels = { high: 'ÉLEVÉ', medium: 'MOYEN', low: 'FAIBLE' };
+  return `<span class="impact-pill pill-${impact}"><span class="pill-dot dot-${impact}"></span>${labels[impact]}</span>`;
+}
+const FLAGS = { USD:'🇺🇸', EUR:'🇪🇺', GBP:'🇬🇧', JPY:'🇯🇵', CNY:'🇨🇳', CHF:'🇨🇭', CAD:'🇨🇦', AUD:'🇦🇺', XAU:'🥇', NZD:'🇳🇿' };
+
+function renderEvents() {
+  const now = getParisNow();
+  let filtered = events;
+  if (currentFilter === 'high') filtered = events.filter(e => e.impact === 'high');
+  else if (currentFilter === 'usd') filtered = events.filter(e => e.currency === 'USD');
+  else if (currentFilter === 'xau') filtered = events.filter(e => e.affectsGold);
+  else if (currentFilter === 'upcoming') filtered = events.filter(e => !e.actual && parseEventTime(e.time, now) > now);
+  const nextUpcomingTime = events.filter(e => !e.actual && parseEventTime(e.time, now) > now).sort((a,b) => parseEventTime(a.time, now) - parseEventTime(b.time, now))[0]?.time;
+  const highCount = events.filter(e => !e.actual && e.impact === 'high').length;
+  document.getElementById('m-total').textContent = events.length;
+  document.getElementById('m-high').textContent = highCount;
+  if (filtered.length === 0) {
+    document.getElementById('events-body').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text3)">Aucune annonce pour ce filtre</td></tr>`;
+    return;
+  }
+  document.getElementById('events-body').innerHTML = filtered.map(ev => {
+    const t = parseEventTime(ev.time, now);
+    const isPast = ev.actual !== null || t < now;
+    const isNext = ev.time === nextUpcomingTime;
+    const cls = isPast ? 'ev-past' : isNext ? 'ev-next' : '';
+    const flag = FLAGS[ev.currency] || '🌐';
+    let actualHtml = '<span style="color:var(--text3)">—</span>';
+    if (ev.actual) {
+      const beat = parseFloat(ev.actual) > parseFloat(ev.forecast);
+      actualHtml = `<span class="data-val ${beat ? 'actual-beat' : 'actual-miss'}">${ev.actual} ${beat ? '▲' : '▼'}</span>`;
+    }
+    return `<tr class="${cls}">
+      <td class="ev-time">${ev.time}${isNext ? '<span class="ev-next-marker">▶</span>' : ''}</td>
+      <td><span class="flag-cell">${flag}</span> ${ev.currency}</td>
+      <td class="ev-name">${ev.name}${ev.affectsGold ? '<span class="xau-tag">OR</span>' : ''}</td>
+      <td>${impactPill(ev.impact)}</td>
+      <td class="data-val" style="color:var(--text3)">${ev.prev || '—'}</td>
+      <td class="data-val" style="color:var(--text2)">${ev.forecast || '—'}</td>
+      <td>${actualHtml}</td>
+      <td>${robotStatusForEvent(ev, now)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('status-events-bar').innerHTML = `<span class="status-dot dot-green"></span>Annonces: ${events.length} chargées`;
+}
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEvents();
+}
+
+// ===================== ALERTS =====================
+function pushAlert(icon, msg, detail) {
+  const now = getParisNow();
+  const timeStr = fmtTime(now);
+  alertLog.unshift({ icon, msg, detail, time: timeStr });
+  if (alertLog.length > 20) alertLog.pop();
+  const el = document.getElementById('alerts-list');
+  el.innerHTML = alertLog.slice(0, 8).map(a => `
+    <div class="alert-item">
+      <span class="alert-icon">${a.icon}</span>
+      <div style="flex:1"><div class="alert-msg"><strong>${a.msg}</strong>${a.detail ? ' — ' + a.detail : ''}</div></div>
+      <span class="alert-time">${a.time}</span>
+    </div>`).join('');
+}
+
+// ===================== NOTIFICATIONS =====================
+function showNotif(title, msg) {
+  const el = document.getElementById('notif');
+  document.getElementById('notif-title').textContent = title;
+  document.getElementById('notif-msg').textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 6000);
+}
+
+// ===================== SOUND =====================
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  const btn = document.getElementById('sound-btn');
+  btn.textContent = soundEnabled ? '🔔 Son ON' : '🔔 Son OFF';
+  btn.className = soundEnabled ? 'sound-btn on' : 'sound-btn';
+  pushAlert(soundEnabled ? '🔔' : '🔕', `Alertes sonores ${soundEnabled ? 'activées' : 'désactivées'}`, '');
+}
+function playBeep(freq, vol, times) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    for (let i = 0; i < times; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(vol, ctx.currentTime + i * 0.3);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.3 + 0.25);
+      osc.start(ctx.currentTime + i * 0.3);
+      osc.stop(ctx.currentTime + i * 0.3 + 0.3);
+    }
+  } catch(e) {}
+}
+
+// ===================== REFRESH BAR =====================
+function animateRefreshBar(duration) {
+  const bar = document.getElementById('refresh-bar');
+  let start = null;
+  function step(ts) {
+    if (!start) start = ts;
+    const pct = Math.min(100, ((ts - start) / duration) * 100);
+    bar.style.width = pct + '%';
+    if (pct < 100) requestAnimationFrame(step);
+    else { setTimeout(() => { bar.style.width = '0%'; }, 200); }
+  }
+  requestAnimationFrame(step);
+}
+
+// ===================== MAIN LOOP =====================
+let eventsLastFetch = 0;
+let priceLastFetch = 0;
+const EVENTS_INTERVAL = 5 * 60 * 1000;  // 5 min
+const PRICE_INTERVAL = 30 * 1000;        // 30 sec
+
+async function mainLoop() {
+  const now = Date.now();
+  // Fetch price
+  if (now - priceLastFetch > PRICE_INTERVAL) {
+    priceLastFetch = now;
+    const price = await fetchPrice();
+    updatePriceUI(price);
+  }
+  // Fetch events
+  if (now - eventsLastFetch > EVENTS_INTERVAL) {
+    eventsLastFetch = now;
+    animateRefreshBar(3000);
+    const fetched = await fetchForexFactory();
+    if (fetched) {
+      events = fetched;
+      pushAlert('📡', 'Annonces mises à jour', `${events.length} événements chargés`);
+    }
+    renderEvents();
+  }
+  // Always update UI
+  const parisNow = getParisNow();
+  updateBanner(parisNow);
+  updateCountdown(parisNow);
+  renderRisk(computeRisk(parisNow));
+  renderSessions();
+  // Clock
+  document.getElementById('clock-display').textContent = parisNow.toLocaleTimeString('fr-FR');
+  // Status bar
+  refreshCountdown = Math.ceil((EVENTS_INTERVAL - (Date.now() - eventsLastFetch)) / 1000);
+  document.getElementById('next-refresh').textContent = `Prochaine MAJ annonces: ${refreshCountdown}s`;
+  document.getElementById('last-update-bar').textContent = `MAJ: ${fmtTime(parisNow)}`;
+}
+
+// ===================== INIT =====================
+async function init() {
+  loadSettings();
+  initChart();
+  pushAlert('🚀', 'Dashboard démarré', 'Chargement des données...');
+  // Initial load
+  await mainLoop();
+  // Tick every second for countdown
+  setInterval(mainLoop, 1000);
+}
+init();
+</script>
+</body>
+</html>
