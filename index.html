@@ -652,17 +652,14 @@ tbody tr:hover td { background: var(--bg3); }
   <div class="status-right" id="next-refresh">Prochaine MAJ: --</div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 // ===================== STATE =====================
 let events = [];
-let priceHistory = [];
 let currentPrice = null;
 let currentFilter = 'all';
 let soundEnabled = false;
 let lastRobotState = null;
 let alertLog = [];
-let priceChart = null;
 let settings = {
   before: 30, after: 30, alertMin: 60, impact: 'high'
 };
@@ -903,92 +900,31 @@ function updatePriceUI(data) {
   currentPrice = data;
   const p = data.price.toFixed(2);
   const marketOpen = data.marketOpen;
-
-  // Affichage prix
-  document.getElementById('price-display').textContent = p;
-  document.getElementById('m-price').textContent = p;
-
-  // Variation
   const chg = data.change || 0;
   const pct = data.changePct || 0;
   const sign = chg >= 0 ? '+' : '';
   const color = chg >= 0 ? 'var(--green)' : 'var(--red)';
   const chgStr = `${sign}${chg.toFixed(2)} (${sign}${pct.toFixed(2)}%)`;
-  document.getElementById('price-change-display').textContent = chgStr;
-  document.getElementById('price-change-display').style.color = chg === 0 ? 'var(--text3)' : color;
-  document.getElementById('m-change').textContent = chgStr;
-  document.getElementById('m-change').className = `m-change ${chg >= 0 ? 'up' : 'down'}`;
 
-  // Source et statut marché
+  // Metric cards (always present)
+  const mPrice = document.getElementById('m-price');
+  const mChange = document.getElementById('m-change');
+  if (mPrice) mPrice.textContent = p;
+  if (mChange) { mChange.textContent = chgStr; mChange.className = `m-change ${chg >= 0 ? 'up' : 'down'}`; }
+
   const src = data.source || 'Yahoo Finance';
-  const priceSourceEl = document.getElementById('price-source-label');
-  const priceBadgeEl = document.getElementById('price-badge');
   if (!marketOpen) {
     const reopens = marketClosedUntil();
     const reopenStr = reopens.toLocaleString('fr-FR', { weekday:'long', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris' });
-    document.getElementById('status-price-bar').innerHTML = `<span class="status-dot dot-orange"></span>Marché FERMÉ · Réouverture ${reopenStr} (heure Paris)`;
-    if (priceSourceEl) {
-      const lastDate = data.lastTradeDate ? data.lastTradeDate.toLocaleDateString('fr-FR',{weekday:'long', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris'}) : 'vendredi';
-      priceSourceEl.innerHTML = `<span style="color:var(--orange)">⛔ Marché fermé (weekend) — Dernier cours : ${lastDate}</span>`;
-    }
-    if (priceBadgeEl) { priceBadgeEl.textContent = 'Marché fermé'; priceBadgeEl.className = 'card-badge badge-gold'; }
-    // Griser le prix pour signifier qu'il est périmé
-    document.getElementById('price-display').style.opacity = '0.5';
-    document.getElementById('price-change-display').style.opacity = '0.5';
+    document.getElementById('status-price-bar').innerHTML = `<span class="status-dot dot-orange"></span>Marché FERMÉ · Réouverture ${reopenStr} (Paris)`;
+    if (mPrice) mPrice.style.opacity = '0.5';
   } else {
     document.getElementById('status-price-bar').innerHTML = `<span class="status-dot dot-green"></span>Prix: $${p} · ${src}`;
-    if (priceSourceEl) priceSourceEl.textContent = `${src} · XAU/USD Spot · USD / Troy oz`;
-    if (priceBadgeEl) { priceBadgeEl.textContent = 'Live'; priceBadgeEl.className = 'card-badge badge-live'; }
-    document.getElementById('price-display').style.opacity = '1';
-    document.getElementById('price-change-display').style.opacity = '1';
+    if (mPrice) mPrice.style.opacity = '1';
   }
-  updateChart();
 }
 
 // ===================== CHART =====================
-function initChart() {
-  const ctx = document.getElementById('priceChart').getContext('2d');
-  priceChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: Array(60).fill(''),
-      datasets: [{
-        data: Array(60).fill(null),
-        borderColor: '#d4a843',
-        borderWidth: 1.5,
-        pointRadius: 0,
-        fill: true,
-        backgroundColor: (ctx) => {
-          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 120);
-          g.addColorStop(0, 'rgba(212,168,67,0.15)');
-          g.addColorStop(1, 'rgba(212,168,67,0)');
-          return g;
-        },
-        tension: 0.3,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      animation: false,
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
-      scales: {
-        x: { display: false },
-        y: {
-          display: true, position: 'right',
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#4a5568', font: { size: 10, family: "'JetBrains Mono'" }, maxTicksLimit: 4,
-            callback: v => v ? v.toFixed(0) : '' }
-        }
-      }
-    }
-  });
-}
-function updateChart() {
-  if (!priceChart || priceHistory.length === 0) return;
-  priceChart.data.datasets[0].data = [...priceHistory];
-  priceChart.data.labels = priceHistory.map((_,i) => i);
-  priceChart.update('none');
-}
 
 // ===================== RISK SCORE =====================
 function computeRisk(now) {
@@ -1318,7 +1254,6 @@ async function mainLoop() {
 // ===================== INIT =====================
 async function init() {
   loadSettings();
-  initChart();
   pushAlert('🚀', 'Dashboard démarré', 'Chargement des données...');
   // Initial load
   await mainLoop();
